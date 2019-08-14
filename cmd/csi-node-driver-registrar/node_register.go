@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"strings"
 
 	"google.golang.org/grpc"
 
@@ -58,6 +59,22 @@ func nodeRegister(
 	klog.Infof("Starting Registration Server at: %s\n", socketPath)
 	lis, err := net.Listen("unix", socketPath)
 	if err != nil {
+		// CSI-prototype: workaround
+		klog.Warningf("CSI-prototype: Listen failed with error %s", err.Error())
+		// E0826 16:51:42.330271 4536 node_register.go:61] failed to
+		// listen on socket:
+		// /registration/filestore.csi.storage.gke.io-reg.sock with
+		// error: listen unix
+		// /registration/filestore.csi.storage.gke.io-reg.sock: bind:
+		// Only one usage of each socket address (protocol/network
+		// address/port) is normally permitted.
+		if strings.Contains(err.Error(), "Only one usage of each socket address") {
+			klog.Warningf("CSI-prototype: removing %s and listening again", socketPath)
+			os.Remove(socketPath)
+			lis, err = net.Listen("unix", socketPath)
+		}
+	}
+	if err != nil {
 		klog.Errorf("failed to listen on socket: %s with error: %+v", socketPath, err)
 		os.Exit(1)
 	}
@@ -72,8 +89,12 @@ func nodeRegister(
 	// Starts service
 	if err := grpcServer.Serve(lis); err != nil {
 		klog.Errorf("Registration Server stopped serving: %v", err)
+		klog.Warningf("CSI-prototype: deleting socket %s before exit", socketPath)
+		_ = os.Remove(socketPath)
 		os.Exit(1)
 	}
+	klog.Warningf("CSI-prototype: gRPC server shut down, deleting socket %s before exit", socketPath)
+	_ = os.Remove(socketPath)
 	// If gRPC server is gracefully shutdown, exit
 	os.Exit(0)
 }
