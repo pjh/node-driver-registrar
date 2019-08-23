@@ -26,8 +26,8 @@ import (
 	"k8s.io/klog"
 	registerapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1alpha1"
 
-	"github.com/kubernetes-csi/csi-lib-utils/connection"
-	csirpc "github.com/kubernetes-csi/csi-lib-utils/rpc"
+	//"github.com/kubernetes-csi/csi-lib-utils/connection"
+	//csirpc "github.com/kubernetes-csi/csi-lib-utils/rpc"
 )
 
 const (
@@ -118,21 +118,21 @@ func main() {
 	// can skip adding mapping to "csi.volume.kubernetes.io/nodeid" annotation.
 
 	klog.V(1).Infof("Attempting to open a gRPC connection with: %q", *csiAddress)
-	csiConn, err := connection.Connect(*csiAddress)
-	if err != nil {
-		klog.Errorf("error connecting to CSI driver: %v", err)
-		os.Exit(1)
-	}
+	//csiConn, err := connection.Connect(*csiAddress)
+	//if err != nil {
+	//	klog.Errorf("error connecting to CSI driver: %v", err)
+	//	os.Exit(1)
+	//}
 
 	klog.V(1).Infof("Calling CSI driver to discover driver name")
-	ctx, cancel := context.WithTimeout(context.Background(), csiTimeout)
+	_, cancel := context.WithTimeout(context.Background(), csiTimeout)
 	defer cancel()
 
-	csiDriverName, err := csirpc.GetDriverName(ctx, csiConn)
-	if err != nil {
-		klog.Errorf("error retreiving CSI driver name: %v", err)
-		os.Exit(1)
-	}
+	csiDriverName := "filestore.csi.storage.gke.io"
+	//if err != nil {
+	//	klog.Errorf("error retreiving CSI driver name: %v", err)
+	//	os.Exit(1)
+	//}
 
 	klog.V(2).Infof("CSI driver name: %q", csiDriverName)
 
