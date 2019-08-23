@@ -26,8 +26,9 @@ import (
 	"k8s.io/klog"
 	registerapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1alpha1"
 
-	"github.com/kubernetes-csi/csi-lib-utils/connection"
-	csirpc "github.com/kubernetes-csi/csi-lib-utils/rpc"
+	// CSI-prototype: skip
+	//"github.com/kubernetes-csi/csi-lib-utils/connection"
+	//csirpc "github.com/kubernetes-csi/csi-lib-utils/rpc"
 )
 
 const (
@@ -75,6 +76,8 @@ func newRegistrationServer(driverName string, endpoint string, versions []string
 // GetInfo is the RPC invoked by plugin watcher
 func (e registrationServer) GetInfo(ctx context.Context, req *registerapi.InfoRequest) (*registerapi.PluginInfo, error) {
 	klog.Infof("Received GetInfo call: %+v", req)
+	klog.Warningf("CSI-prototype: returning PluginInfo: type=%s, name=%s, endpoint=%s, supported versions=%s",
+		registerapi.CSIPlugin, e.driverName, e.endpoint, e.version)
 	return &registerapi.PluginInfo{
 		Type:              registerapi.CSIPlugin,
 		Name:              e.driverName,
@@ -118,21 +121,23 @@ func main() {
 	// can skip adding mapping to "csi.volume.kubernetes.io/nodeid" annotation.
 
 	klog.V(1).Infof("Attempting to open a gRPC connection with: %q", *csiAddress)
-	csiConn, err := connection.Connect(*csiAddress)
-	if err != nil {
-		klog.Errorf("error connecting to CSI driver: %v", err)
-		os.Exit(1)
-	}
+	// CSI-prototype: skip
+	//csiConn, err := connection.Connect(*csiAddress)
+	//if err != nil {
+	//	klog.Errorf("error connecting to CSI driver: %v", err)
+	//	os.Exit(1)
+	//}
 
 	klog.V(1).Infof("Calling CSI driver to discover driver name")
-	ctx, cancel := context.WithTimeout(context.Background(), csiTimeout)
+	_, cancel := context.WithTimeout(context.Background(), csiTimeout)
 	defer cancel()
 
-	csiDriverName, err := csirpc.GetDriverName(ctx, csiConn)
-	if err != nil {
-		klog.Errorf("error retreiving CSI driver name: %v", err)
-		os.Exit(1)
-	}
+	// CSI-prototype: force
+	csiDriverName := "filestore.csi.storage.gke.io"
+	//if err != nil {
+	//	klog.Errorf("error retreiving CSI driver name: %v", err)
+	//	os.Exit(1)
+	//}
 
 	klog.V(2).Infof("CSI driver name: %q", csiDriverName)
 
